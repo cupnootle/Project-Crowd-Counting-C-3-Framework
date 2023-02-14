@@ -4,6 +4,8 @@
 - integrate ideas from recent works at CVPR 2022:[Crowd Counting in the frequency domain](https://github.com/wbshu/Crowd_Counting_in_the_Frequency_Domain),[Multi-faceted attention](https://github.com/LoraLinH/Boosting-Crowd-Counting-via-Multifaceted-Attention)
 - extension to datasets published recently: VSCrowd, Fudan-UCC
 
+bonjour
+
 -------------------
 
 # **C**rowd **C**ounting **C**ode Framework (C^3-Framework) 
