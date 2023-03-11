@@ -14,6 +14,7 @@ from  models.vgg import vgg19
 from datasets.crowd_sh import Crowd
 from losses.bay_loss import Bay_Loss
 from losses.post_prob import Post_Prob
+import pickle
 
 
 def train_collate(batch):
@@ -53,7 +54,7 @@ class RegTrainer(Trainer):
                                           pin_memory=(True if x == 'train' else False))
                             for x in ['train', 'val']}
         self.model =vgg19()
-        self.model.to(self.device)
+        
         self.optimizer = optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
         self.start_epoch = 0
@@ -78,18 +79,34 @@ class RegTrainer(Trainer):
         self.best_mae = np.inf
         self.best_mse = np.inf
         self.best_count = 0
+        self.save_path_drive='/content/drive/MyDrive/C3/UCF-QNRF_ECCV18/UCF-QNRF_ECCV18/weights.pth'
 
-    def train(self):
+        if os.path.exists(self.save_path_drive):
+            print("importing model data")
+            self.model.load_state_dict(torch.load(self.save_path_drive))
+            self.model.eval()
+
+        self.model.to(self.device)
+
+    def train(self, save_interval=1):
         """training process"""
         args = self.args
         for epoch in range(self.start_epoch, args.max_epoch):
             logging.info('-'*5 + 'Epoch {}/{}'.format(epoch, args.max_epoch - 1) + '-'*5)
             self.epoch = epoch
-            self.train_eopch()
+            self.train_epoch()
             if epoch % args.val_epoch == 0 and epoch >= args.val_start:
                 self.val_epoch()
+            if epoch % save_interval == 0:
+                
+                torch.save(self.model.state_dict(), self.save_path_drive)
+                print("model saved")
+                
+            if epoch ==20:
+                print("breaking")
+                break
 
-    def train_eopch(self):
+    def train_epoch(self):
         epoch_loss = AverageMeter()
         epoch_mae = AverageMeter()
         epoch_mse = AverageMeter()
@@ -123,6 +140,7 @@ class RegTrainer(Trainer):
         logging.info('Epoch {} Train, Loss: {:.2f}, MSE: {:.2f} MAE: {:.2f}, Cost {:.1f} sec'
                      .format(self.epoch, epoch_loss.get_avg(), np.sqrt(epoch_mse.get_avg()), epoch_mae.get_avg(),
                              time.time()-epoch_start))
+        """ data is saved at each epoch """
         model_state_dic = self.model.state_dict()
         save_path = os.path.join(self.save_dir, '{}_ckpt.tar'.format(self.epoch))
         torch.save({
