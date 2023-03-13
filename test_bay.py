@@ -4,6 +4,7 @@ import numpy as np
 from datasets.crowd_sh import Crowd
 from models.vgg import vgg19
 import argparse
+import cv2
 
 args = None
 
@@ -40,6 +41,12 @@ if __name__ == '__main__':
             temp_minu = count[0].item() - torch.sum(outputs).item()
             print(name, temp_minu, count[0].item(), torch.sum(outputs).item())
             epoch_minus.append(temp_minu)
+        # Save the modified density image
+        output_img = outputs.squeeze().cpu().numpy()
+        output_img = cv2.normalize(output_img, None, 0, 255, cv2.NORM_MINMAX)
+        output_img = output_img.astype(np.uint8)
+        output_img = cv2.applyColorMap(output_img, cv2.COLORMAP_JET)
+        cv2.imwrite(os.path.join(args.save_dir, name[0] + '.png'), output_img)
 
     epoch_minus = np.array(epoch_minus)
     mse = np.sqrt(np.mean(np.square(epoch_minus)))
