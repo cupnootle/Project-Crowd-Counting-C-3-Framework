@@ -240,8 +240,11 @@ def update_model(
     exp_name,
     scores,
     train_record,
+    loss_tab,
     log_file=None,
 ):
+    
+    ## Modifying to save the loss everytime we update the model
 
     mae, mse, loss = scores
 
@@ -270,6 +273,7 @@ def update_model(
         "i_tb": i_tb,
         "exp_path": exp_path,
         "exp_name": exp_name,
+        "loss": loss_tab,
     }
 
     torch.save(latest_state, os.path.join(exp_path, exp_name, "latest_state.pth"))

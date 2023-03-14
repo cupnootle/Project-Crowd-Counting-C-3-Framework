@@ -26,8 +26,8 @@ class CSRNet_al_drop(nn.Module):
         pred = self.fc_pred(x)
         pred = F.softplus(pred)
         pred = F.upsample(pred, scale_factor=8)
-        logvar = F.softplus(self.fc_logvar(x)) #softplus is a smooth approximation to ReLU
         logvar = F.upsample(logvar, scale_factor=8)
+        #the logvar is allowed to be negative
         return pred, logvar #the model now outputs both a prediction and a logvar
 
     def _initialize_weights(self):

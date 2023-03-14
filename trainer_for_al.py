@@ -10,6 +10,7 @@ from config import cfg as default_cfg
 from misc.utils import *
 import pdb
 
+## Trainer for aleatoric loss
 
 class Trainer:
     def __init__(self, dataloader, cfg_data, pwd, cfg=None):
@@ -30,7 +31,6 @@ class Trainer:
         self.optimizer = optim.Adam(
             self.net.CCN.parameters(), lr=self.cfg.LR, weight_decay=1e-4
         )
-        # self.optimizer = optim.SGD(self.net.parameters(), self.cfg.LR, momentum=0.95,weight_decay=5e-4)
         self.scheduler = StepLR(
             self.optimizer,
             step_size=self.cfg.NUM_EPOCH_LR_DECAY,
@@ -42,6 +42,8 @@ class Trainer:
 
         self.epoch = 0
         self.i_tb = 0
+
+        self.loss = []
 
         if self.cfg.PRE_GCC:
             self.net.load_state_dict(torch.load(self.cfg.PRE_GCC_MODEL))
@@ -58,6 +60,7 @@ class Trainer:
             self.train_record = latest_state["train_record"]
             self.exp_path = latest_state["exp_path"]
             self.exp_name = latest_state["exp_name"]
+            self.loss = latest_state["loss"]
 
         self.writer, self.log_txt = logger(
             self.exp_path, self.exp_name, self.pwd, "exp", resume=self.cfg.RESUME
@@ -65,7 +68,6 @@ class Trainer:
 
     def forward(self):
 
-        # self.validate_V3()
         for epoch in range(self.epoch, self.cfg.MAX_EPOCH):
             self.epoch = epoch
             if epoch > self.cfg.LR_DECAY_START:
@@ -101,18 +103,11 @@ class Trainer:
 
             self.optimizer.zero_grad()
             pred_map, logvar = self.net(img, gt_map)
-            loss = self.net.loss#(pred_map, gt_map, logvar)
+            loss = self.net.loss
             loss.backward()
-            self.optimizer.step()
-
-            
+            self.optimizer.step()            
 
             if (i + 1) % self.cfg.PRINT_FREQ == 0:
-
-                torch.save(self.net.state_dict(), 
-                       drive_path + '/MyDrive/C3/saved_aleatoric/' + 'save_' + 'ep' + 
-                       str(self.epoch + 1) + 'it_' + str(i+1) + '.pth')
-                #uncomment if on colab to save weights
 
                 self.i_tb += 1
                 self.writer.add_scalar("train_loss", loss.item(), self.i_tb)
@@ -134,6 +129,7 @@ class Trainer:
                         pred_map[0].sum().data / self.cfg_data.LOG_PARA,
                     )
                 )
+                print("logvar:" + str(logvar[0].mean().data))
 
     def validate_V1(self):  # validate_V1 for SHHA, SHHB, UCF-QNRF, UCF50
 
@@ -192,6 +188,7 @@ class Trainer:
             self.exp_name,
             [mae, mse, loss],
             self.train_record,
+            self.loss,
             self.log_txt,
         )
         print_summary(self.exp_name, [mae, mse, loss], self.train_record)
@@ -269,6 +266,7 @@ class Trainer:
             self.exp_name,
             [mae, 0, loss],
             self.train_record,
+            self.loss,
             self.log_txt,
         )
         print_WE_summary(
@@ -354,6 +352,7 @@ class Trainer:
             self.exp_name,
             [mae, mse, loss],
             self.train_record,
+            self.loss,
             self.log_txt,
         )
 

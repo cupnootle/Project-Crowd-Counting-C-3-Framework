@@ -1,9 +1,10 @@
 import pdb
 import imp
 
+## Crowd Counter for aleatoric loss
 
 class CrowdCounter_aleatoric(nn.Module):
-    def __init__(self, gpus, al_loss, model_name="CSRNet_al"):
+    def __init__(self, gpus, al_loss, model_name="CSRNet_al_drop"):
         super(CrowdCounter_aleatoric, self).__init__()
 
         net = getattr(
